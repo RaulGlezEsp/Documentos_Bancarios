@@ -45,7 +45,9 @@ const Mailjet = require('node-mailjet');
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public")); // servir login, formulario, encabezado, etc.
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static("public"));
+
 
 
 // Pool PostgreSQL (Render)
