@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Historial de Informes</title>
+<style>
+        body { font-family: Arial; max-width: 700px; margin: 20px auto; }
+        label { font-weight: bold; display: block; margin-top: 10px; }
+        input, textarea, select {
+            width: 100%; padding: 8px; margin-top: 5px;
+            border: 1px solid #ccc; border-radius: 4px;
+        }
+        button {
+            margin-top: 20px; padding: 10px 20px;
+            background: #4CAF50; color: white;
+            border: none; border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover { background: #45a049; }
+        form {
+            max-width: 600px;
+            margin: auto;
+            padding: 15px;
+        }
+
+        form label {
+            display: block;
+            margin-top: 12px;
+            font-weight: bold;
+        }
+
+        form input,
+        form select,
+        form textarea {
+            width: 100%;
+            padding: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            margin-top: 4px;
+        }
+
+        form button {
+            margin-top: 20px;
+            padding: 12px;
+            font-size: 16px;
+            width: 100%;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        form button:hover {
+            background-color: #45a049;
+        }
+
+        /* Responsive ajustes si hicieras columnas en el futuro */
+        @media (max-width: 600px) {
+            form {
+                padding: 10px;
+            }
+        }
+
+    </style>
+</style>
+</head>
+
+<body>
+
+<h2>Historial de XML generados</h2>
+Operario: <strong id="operarioLabel"></strong>
+<br><br>
+
+<!-- ========================= -->
+<!-- FILTROS DE FACTURAS -->
+<!-- ========================= -->
+<div class="filtros">
+  Cliente:
+  <input type="text" id="cliente">
+
+  Fecha libramiento:
+  <input type="date" id="fecha_libramiento">
+
+  Fecha vencimiento:
+  <input type="date" id="fecha_vencimiento">
+
+  <button id="btnBuscar">Buscar facturas</button>
+  <button onclick="location.href='/formulario.html'">Volver</button>
+</div>
+
+<br>
+
+<!-- ========================= -->
+<!-- RESULTADOS DE FACTURAS -->
+<!-- ========================= -->
+<h3>Facturas encontradas</h3>
+<div id="resultados"></div>
+
+<br>
+
+<!-- ========================= -->
+<!-- HISTORIAL DE XML -->
+<!-- ========================= -->
+<h3>XML generados</h3>
+<div id="resultadosXML"></div>
+
+<script>
+// =========================
+// LOGIN
+// =========================
+fetch("/api/me")
+  .then(r => r.ok ? r.json() : location.href="/index.html")
+  .then(user => {
+    if (!user || !user.username) location.href="/index.html";
+    document.getElementById("operarioLabel").innerText = user.username;
+  });
+
+
+// =========================
+// BUSCAR FACTURAS
+// =========================
+async function buscarFacturas() {
+    const cliente = document.getElementById("cliente").value.trim();
+    const fecha_libramiento = document.getElementById("fecha_libramiento").value;
+    const fecha_vencimiento = document.getElementById("fecha_vencimiento").value;
+
+    const params = new URLSearchParams();
+
+    if (cliente) params.append("cliente", cliente);
+    if (fecha_libramiento) params.append("fecha_libramiento", fecha_libramiento);
+    if (fecha_vencimiento) params.append("fecha_vencimiento", fecha_vencimiento);
+
+    params.append("page", 1);
+    params.append("limit", 20);
+
+    const res = await fetch(`/historial?${params.toString()}`);
+
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        document.getElementById("resultados").innerHTML =
+            `<p>${err.error || "Error en la búsqueda"}</p>`;
+        return;
+    }
+
+    const json = await res.json();
+    mostrarTablaFacturas(json.datos);
+}
+
+document.getElementById("btnBuscar").addEventListener("click", buscarFacturas);
+
+
+// =========================
+// TABLA DE FACTURAS
+// =========================
+function mostrarTablaFacturas(datos) {
+    const cont = document.getElementById("resultados");
+
+    if (datos.length === 0) {
+        cont.innerHTML = "<p>No hay facturas con esos filtros.</p>";
+        return;
+    }
+
+    let html = "<table><tr>";
+    const columnas = [
+        "id",
+        "num_factura",
+        "cliente",
+        "importe",
+        "cuenta_bancaria",
+        "fecha_libramiento",
+        "fecha_vencimiento"
+    ];
+
+    columnas.forEach(c => html += `<th>${c.toUpperCase()}</th>`);
+    html += "</tr>";
+
+    datos.forEach(row => {
+        html += "<tr>";
+        columnas.forEach(col => {
+            let v = row[col] || "";
+            if (col.includes("fecha") && v) v = v.slice(0, 10);
+            html += `<td>${v}</td>`;
+        });
+        html += "</tr>";
+    });
+
+    html += "</table>";
+    cont.innerHTML = html;
+}
+
+
+// =========================
+// HISTORIAL DE XML
+// =========================
+async function cargarHistorialXML() {
+    const res = await fetch("/api/xmlHistorial");
+    const datos = await res.json();
+
+    let html = "<table><tr>";
+    html += "<th>ID XML</th><th>Factura</th><th>Cliente</th><th>Fecha</th><th>Descargar</th>";
+    html += "</tr>";
+
+    datos.forEach(row => {
+        html += `
+        <tr>
+            <td>${row.id}</td>
+            <td>${row.num_factura}</td>
+            <td>${row.cliente}</td>
+            <td>${row.fecha_generado.slice(0,10)}</td>
+            <td><a href="/api/xml/${row.id}">Descargar</a></td>
+        </tr>`;
+    });
+
+    html += "</table>";
+
+    document.getElementById("resultadosXML").innerHTML = html;
+}
+
+cargarHistorialXML();
+
+</script>
+
+</body>
+
+</html>
