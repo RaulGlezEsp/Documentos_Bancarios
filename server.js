@@ -93,9 +93,6 @@ app.post("/login", async (req, res) => {
     "SELECT * FROM operarios_facturas WHERE username = $1",
     [username]
   );
-  console.log("BODY:", req.body);
-  console.log("USER:", username);
-  console.log("HASH:", password);
 
   if (result.rows.length === 0) {
     return res.redirect("/index.html?error=1");
