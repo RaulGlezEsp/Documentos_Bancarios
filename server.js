@@ -109,10 +109,9 @@ app.post("/login", async (req, res) => {
 
   req.session.username = user.username;
   req.session.nombre = user.nombre;
-  req.session.empresa = user.empresa; // NUEVO
-  req.session.rol = user.rol;         // NUEVO
+          
 
-  res.redirect("/menu.html");
+  res.redirect("/formulario.html");
 });
 
 
