@@ -114,27 +114,29 @@ fetch("/api/me")
   
 
 document.getElementById("formBank").addEventListener("submit", async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const formData = new FormData(e.target);
+  const formData = new FormData(e.target);
+  const data = Object.fromEntries(formData.entries());
 
-    // 1. Insertar factura
-    const res = await fetch("/api/insert", {
-        method: "POST",
-        body: formData
-    });
+  const res = await fetch("/api/insert", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(data)
+  });
 
-    if (!res.ok) {
-        alert("Error insertando");
-        return;
-    }
+  if (!res.ok) {
+    alert("Error insertando");
+    return;
+  }
 
-    const insertData = await res.json();
-    alert("Registro insertado correctamente");
+  const insertData = await res.json();
+  alert("Registro insertado correctamente");
 
-    // 2. Generar XML
-    const xmlRes = await fetch(`/api/generarXML/${insertData.id}`);
-
+  const xmlRes = await fetch(`/api/generarXML/${insertData.id}`);
+  
     if (!xmlRes.ok) {
         alert("Error generando XML");
         return;
