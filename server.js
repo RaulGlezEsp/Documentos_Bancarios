@@ -98,7 +98,7 @@ app.post("/login", async (req, res) => {
 
   const user = result.rows[0];
 
-  const ok = await bcrypt.compare(password, user.password_hash);
+  const ok = await bcrypt.compare(password, user.pass_hash);
 
   if (!ok) {
     return res.redirect("/index.html?error=1");
