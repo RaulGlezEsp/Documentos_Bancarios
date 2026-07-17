@@ -92,8 +92,8 @@ app.post("/login", async (req, res) => {
     [username]
   );
   console.log("BODY:", req.body);
-  console.log("USER:", user);
-  console.log("HASH:", user.pass_hash);
+  console.log("USER:", username);
+  console.log("HASH:", username.pass_hash);
 
   if (result.rows.length === 0) {
     return res.redirect("/index.html?error=1");
